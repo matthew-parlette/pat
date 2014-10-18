@@ -29,4 +29,6 @@ if __name__ == "__main__":
   log.addHandler(fh)
   fh.setFormatter(formatter)
 
-  log.info("Initializing")
+  log.info("PAT Initializing...")
+  log.info("PAT Initialized")
+  log.info("PAT shutting down...")

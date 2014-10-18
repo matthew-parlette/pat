@@ -24,9 +24,9 @@ if __name__ == "__main__":
   log.addHandler(ch)
 
   ## File Logging
-  # fh = logging.FileHandler(os.path.basename(__file__) + '.log')
-  # fh.setLevel(log_level)
-  # fh.setFormatter(formatter)
-  # log.addHandler(fh)
+  fh = logging.FileHandler(os.path.basename(__file__) + '.log')
+  fh.setLevel(log_level)
+  log.addHandler(fh)
+  fh.setFormatter(formatter)
 
   log.info("Initializing")

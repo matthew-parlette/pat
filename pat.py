@@ -3,6 +3,7 @@
 import argparse
 import logging
 import os
+import yaml
 
 if __name__ == "__main__":
     # Parse command line arguments
@@ -33,10 +34,24 @@ if __name__ == "__main__":
     fh.setFormatter(formatter)
 
     log.info("PAT Initializing...")
+    defaults = {
+
+    }
     if os.path.isfile(args.config):
         log.info("Loading config file %s" % args.config)
+        config = yaml.load(file(args.config))
+        if config:
+            # config contains items
+            config = dict(defaults.items() + yaml.load(file(args.config)).items())
+        else:
+            # config is empty, just use defaults
+            config = defaults
     else:
         log.info("Config file does not exist, creating a default config...")
+        with open(args.config, 'w') as outfile:
+            outfile.write( yaml.dump(defaults, default_flow_style=False) )
+        config = defaults
+    log.debug("Config loaded as:\n%s" % str(config))
 
     log.info("PAT Initialized")
     log.info("PAT shutting down...")

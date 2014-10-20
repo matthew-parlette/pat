@@ -4,6 +4,8 @@ import argparse
 import logging
 import os
 import yaml
+import trello.util
+from trello import TrelloClient
 
 if __name__ == "__main__":
     # Parse command line arguments
@@ -35,7 +37,12 @@ if __name__ == "__main__":
 
     log.info("PAT Initializing...")
     defaults = {
-
+        "trello": {
+            "key": "",
+            "secret": "",
+            "oauth_token": "",
+            "oauth_token_secret": "",
+        }
     }
     if os.path.isfile(args.config):
         log.info("Loading config file %s" % args.config)
@@ -52,6 +59,23 @@ if __name__ == "__main__":
             outfile.write( yaml.dump(defaults, default_flow_style=False) )
         config = defaults
     log.debug("Config loaded as:\n%s" % str(config))
+
+    if config['trello']['oauth_token'] == "":
+        # Need to get the trello oauth_token and oauth_token_secret
+        log.debug("Retrieving Trello oauth token...")
+        os.environ["TRELLO_API_KEY"] = config["trello"]["key"]
+        os.environ["TRELLO_API_SECRET"] = config["trello"]["secret"]
+        os.environ["TRELLO_EXPIRATION"] = 'never'
+        trello.util.create_oauth_token()
+
+    log.debug("Creating Trello client...")
+    trello_api = TrelloClient(
+        api_key=config["trello"]["key"],
+        api_secret=config["trello"]["secret"],
+        token=config["trello"]["oauth_token"],
+        token_secret=config["trello"]["oauth_token_secret"]
+    )
+    print trello_api.list_boards()
 
     log.info("PAT Initialized")
     log.info("PAT shutting down...")

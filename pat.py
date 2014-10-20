@@ -76,6 +76,9 @@ if __name__ == "__main__":
         token_secret=config["trello"]["oauth_token_secret"]
     )
     log.debug("Connected to Trello")
+
+    log.info("PAT Initialized")
+
     log.debug("Retrieving list of boards...")
     for board in trello_api.list_boards():
         if board.closed is False:
@@ -89,5 +92,4 @@ if __name__ == "__main__":
             else:
                 log.debug("Board %s has no updates for this timeframe" % board)
 
-    log.info("PAT Initialized")
     log.info("PAT shutting down...")

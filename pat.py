@@ -75,7 +75,19 @@ if __name__ == "__main__":
         token=config["trello"]["oauth_token"],
         token_secret=config["trello"]["oauth_token_secret"]
     )
-    print trello_api.list_boards()
+    log.debug("Connected to Trello")
+    log.debug("Retrieving list of boards...")
+    for board in trello_api.list_boards():
+        if board.closed is False:
+            log.debug("Found open board %s" % board)
+            actions = board.fetch_actions("updateCard")
+            if actions:
+                log.debug("Board %s has updates" % board)
+                print board
+                for action in actions:
+                    print "\t%s" % action
+            else:
+                log.debug("Board %s has no updates for this timeframe" % board)
 
     log.info("PAT Initialized")
     log.info("PAT shutting down...")

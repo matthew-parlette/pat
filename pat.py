@@ -45,7 +45,7 @@ if __name__ == "__main__":
         }
     }
     if os.path.isfile(args.config):
-        log.info("Loading config file %s" % args.config)
+        log.debug("Loading config file %s" % args.config)
         config = yaml.load(file(args.config))
         if config:
             # config contains items
@@ -54,7 +54,7 @@ if __name__ == "__main__":
             # config is empty, just use defaults
             config = defaults
     else:
-        log.info("Config file does not exist, creating a default config...")
+        log.debug("Config file does not exist, creating a default config...")
         with open(args.config, 'w') as outfile:
             outfile.write( yaml.dump(defaults, default_flow_style=False) )
         config = defaults

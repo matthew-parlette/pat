@@ -10,14 +10,47 @@ from trello import TrelloClient
 
 class Trello(object):
     """docstring for Trello"""
-    def __init__(self, api_key, api_secret, token, token_secret):
+    def __init__(self, log, api_key, api_secret, token, token_secret):
         super(Trello, self).__init__()
+        self.log = log
         self.api = TrelloClient(
             api_key,
             api_secret,
             token,
             token_secret
         )
+
+    def actions_for_day(self,date):
+        result = ""
+        self.log.debug("Retrieving list of boards...")
+        for board in trello.api.list_boards():
+            if board.closed is False:
+                self.log.debug("Found open board %s" % board)
+                self.log.debug("Getting card with actions on %s" % (
+                    date.isoformat()
+                ))
+                cards = board.get_cards({
+                    'actions': 'all',
+                    'since': date.isoformat(),
+                    })
+                self.log.debug("Cards loaded as %s" % str(cards))
+                if cards:
+                    self.log.debug("Board %s has updated cards" % board)
+                    result += board
+                    for card in cards:
+                        self.log.debug("Processing card %s" % card)
+                        card.fetch_actions(action_filter='all')
+                        if card.actions:
+                            result += "\t%s" % card.name
+                        for action in card.actions or []:
+                            self.log.debug("Action dictionary is %s" % str(action))
+                            result += "\t\t%s: %s" % (
+                                action['type'],
+                                str(action['data'].keys())
+                            )
+                else:
+                    self.log.debug("Board %s has no updates for this timeframe" % board)
+        return result
 
 
 if __name__ == "__main__":
@@ -83,6 +116,7 @@ if __name__ == "__main__":
 
     log.debug("Creating Trello client...")
     trello = Trello(
+        log=log,
         api_key=config["trello"]["key"],
         api_secret=config["trello"]["secret"],
         token=config["trello"]["oauth_token"],
@@ -93,33 +127,6 @@ if __name__ == "__main__":
 
     log.info("PAT Initialized")
 
-    log.debug("Retrieving list of boards...")
-    for board in trello.api.list_boards():
-        if board.closed is False:
-            log.debug("Found open board %s" % board)
-            log.debug("Getting card with actions on %s" % (
-                date.today().isoformat()
-            ))
-            cards = board.get_cards({
-                'actions': 'all',
-                'since': date.today().isoformat(),
-                })
-            log.debug("Cards loaded as %s" % str(cards))
-            if cards:
-                log.debug("Board %s has updated cards" % board)
-                print board
-                for card in cards:
-                    log.debug("Processing card %s" % card)
-                    card.fetch_actions(action_filter='all')
-                    if card.actions:
-                        print "\t%s" % card.name
-                    for action in card.actions or []:
-                        log.debug("Action dictionary is %s" % str(action))
-                        print "\t\t%s: %s" % (
-                            action['type'],
-                            str(action['data'].keys())
-                        )
-            else:
-                log.debug("Board %s has no updates for this timeframe" % board)
+    print trello.actions_for_day(date.today())
 
     log.info("PAT shutting down...")

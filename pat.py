@@ -56,25 +56,43 @@ class Trello(object):
 
         action is a dictionary."""
 
-        data = getattr(action,'data',{})
+        data = action[u'data']
         if action['type'] == 'createCard':
             return "Created in %s" % (
-                getattr(data,'list','list'),
+                data[u'list'][u'name'],
             )
         elif action['type'] == 'updateCard':
-            if getattr(data,'list',None) == 'done':
-                return "Completed '%s'" % getattr(data,'card','card')
+            # Moving card within a list or to a new list
+            if data.get('list'):
+                # Moved card within list
+                return ""
             else:
-                return "Moved to %s" % (
-                    getattr(data,'list','list'),
-                )
+                # Moved to new list
+                if data.get('listAfter') == 'done':
+                    return "Completed '%s'" % data['card']
+                else:
+                    return "Moved to %s" % (
+                        data[u'listAfter'][u'name'],
+                    )
         elif action['type'] == 'commentCard':
+            if len(data['text']) <= 67:
+                text = data['text']
+            else:
+                text = data['text'][:67] + "..."
             return "Commented\n\t\t\t%s" % (
-                getattr(data,'text','text'),
+                text,
             )
         elif action['type'] == 'addAttachmentToCard':
             return "Added %s" % (
-                getattr(data,'attachment','attachment'),
+                data[u'attachment']['name'],
+            )
+        elif action['type'] == 'addChecklistToCard':
+            return "Added %s" % (
+                data[u'checklist']['name'],
+            )
+        elif action['type'] == 'addMemberToCard':
+            return "Assigned to %s" % (
+                action[u'member'][u'initials'],
             )
         else:
             return "Unknown action type '%s'\n\t\t\t%s" % (
@@ -157,7 +175,7 @@ if __name__ == "__main__":
 
     log.info("PAT Initialized")
 
-    report_date = date.today() - timedelta(days=0)
+    report_date = date.today() - timedelta(days=10)
     log.info("Generating report for %s..." % report_date.isoformat())
     print trello.actions_for_day(report_date)
 

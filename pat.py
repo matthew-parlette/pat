@@ -7,6 +7,7 @@ import yaml
 import trello.util
 from trello import TrelloClient
 
+
 if __name__ == "__main__":
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Process command line options.')
@@ -83,12 +84,25 @@ if __name__ == "__main__":
     for board in trello_api.list_boards():
         if board.closed is False:
             log.debug("Found open board %s" % board)
-            actions = board.fetch_actions("updateCard")
-            if actions:
-                log.debug("Board %s has updates" % board)
+            cards = board.get_cards({
+                'actions': 'all',
+                'since': 'Oct 10 2014 EDT',
+                })
+            log.debug("Cards loaded as %s" % str(cards))
+            if cards:
+                log.debug("Board %s has updated cards" % board)
                 print board
-                for action in actions:
-                    print "\t%s" % action
+                for card in cards:
+                    log.debug("Processing card %s" % card)
+                    card.fetch_actions(action_filter='all')
+                    if card.actions:
+                        print "\t%s" % card.name
+                    for action in card.actions or []:
+                        log.debug("Action dictionary is %s" % str(action))
+                        print "\t\t%s: %s" % (
+                            action['type'],
+                            str(action['data'].keys())
+                        )
             else:
                 log.debug("Board %s has no updates for this timeframe" % board)
 

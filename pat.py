@@ -8,6 +8,17 @@ import trello.util
 from datetime import date
 from trello import TrelloClient
 
+class Trello(object):
+    """docstring for Trello"""
+    def __init__(self, api_key, api_secret, token, token_secret):
+        super(Trello, self).__init__()
+        self.api = TrelloClient(
+            api_key,
+            api_secret,
+            token,
+            token_secret
+        )
+
 
 if __name__ == "__main__":
     # Parse command line arguments
@@ -71,18 +82,19 @@ if __name__ == "__main__":
         trello.util.create_oauth_token()
 
     log.debug("Creating Trello client...")
-    trello_api = TrelloClient(
+    trello = Trello(
         api_key=config["trello"]["key"],
         api_secret=config["trello"]["secret"],
         token=config["trello"]["oauth_token"],
         token_secret=config["trello"]["oauth_token_secret"]
-    )
-    log.debug("Connected to Trello")
+    ) or None
+    if trello:
+        log.debug("Connected to Trello")
 
     log.info("PAT Initialized")
 
     log.debug("Retrieving list of boards...")
-    for board in trello_api.list_boards():
+    for board in trello.api.list_boards():
         if board.closed is False:
             log.debug("Found open board %s" % board)
             log.debug("Getting card with actions on %s" % (

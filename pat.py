@@ -157,7 +157,7 @@ if __name__ == "__main__":
 
     log.info("PAT Initialized")
 
-    report_date = date.today() - timedelta(days=10)
+    report_date = date.today() - timedelta(days=0)
     log.info("Generating report for %s..." % report_date.isoformat())
     print trello.actions_for_day(report_date)
 

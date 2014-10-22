@@ -5,6 +5,7 @@ import logging
 import os
 import yaml
 import trello.util
+from datetime import date
 from trello import TrelloClient
 
 
@@ -84,9 +85,12 @@ if __name__ == "__main__":
     for board in trello_api.list_boards():
         if board.closed is False:
             log.debug("Found open board %s" % board)
+            log.debug("Getting card with actions on %s" % (
+                date.today().isoformat()
+            ))
             cards = board.get_cards({
                 'actions': 'all',
-                'since': 'Oct 10 2014 EDT',
+                'since': date.today().isoformat(),
                 })
             log.debug("Cards loaded as %s" % str(cards))
             if cards:

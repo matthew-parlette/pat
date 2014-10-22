@@ -5,7 +5,7 @@ import logging
 import os
 import yaml
 import trello.util
-from datetime import date
+from datetime import date, timedelta
 from trello import TrelloClient
 
 class Trello(object):
@@ -36,21 +36,51 @@ class Trello(object):
                 self.log.debug("Cards loaded as %s" % str(cards))
                 if cards:
                     self.log.debug("Board %s has updated cards" % board)
-                    result += board
+                    result += "%s\n" % (str(board))
                     for card in cards:
                         self.log.debug("Processing card %s" % card)
                         card.fetch_actions(action_filter='all')
                         if card.actions:
-                            result += "\t%s" % card.name
+                            result += "\t%s\n" % card.name
                         for action in card.actions or []:
                             self.log.debug("Action dictionary is %s" % str(action))
-                            result += "\t\t%s: %s" % (
-                                action['type'],
-                                str(action['data'].keys())
+                            result += "\t\t%s\n" % (
+                                str(self.action_string(action))
                             )
                 else:
                     self.log.debug("Board %s has no updates for this timeframe" % board)
         return result
+
+    def action_string(self,action):
+        """Generate a readable string for the provided action.
+
+        action is a dictionary."""
+
+        data = getattr(action,'data',{})
+        if action['type'] == 'createCard':
+            return "Created in %s" % (
+                getattr(data,'list','list'),
+            )
+        elif action['type'] == 'updateCard':
+            if getattr(data,'list',None) == 'done':
+                return "Completed '%s'" % getattr(data,'card','card')
+            else:
+                return "Moved to %s" % (
+                    getattr(data,'list','list'),
+                )
+        elif action['type'] == 'commentCard':
+            return "Commented\n\t\t\t%s" % (
+                getattr(data,'text','text'),
+            )
+        elif action['type'] == 'addAttachmentToCard':
+            return "Added %s" % (
+                getattr(data,'attachment','attachment'),
+            )
+        else:
+            return "Unknown action type '%s'\n\t\t\t%s" % (
+                action['type'],
+                action['data'].keys(),
+            )
 
 
 if __name__ == "__main__":
@@ -127,6 +157,8 @@ if __name__ == "__main__":
 
     log.info("PAT Initialized")
 
-    print trello.actions_for_day(date.today())
+    report_date = date.today() - timedelta(days=10)
+    log.info("Generating report for %s..." % report_date.isoformat())
+    print trello.actions_for_day(report_date)
 
     log.info("PAT shutting down...")

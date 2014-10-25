@@ -8,22 +8,45 @@ import trello.util
 from datetime import date, timedelta
 from trello import TrelloClient
 
-class Trello(object):
-    """docstring for Trello"""
-    def __init__(self, log, api_key, api_secret, token, token_secret):
-        super(Trello, self).__init__()
-        self.log = log
-        self.api = TrelloClient(
-            api_key,
-            api_secret,
-            token,
-            token_secret
-        )
+class PluginMount(type):
+    def __init__(cls, name, bases, attrs):
+        if not hasattr(cls, 'plugins'):
+            # This branch only executes when processing the mount point itself.
+            # So, since this is a new plugin type, not an implementation, this
+            # class shouldn't be registered as a plugin. Instead, it sets up a
+            # list where plugins can be registered later.
+            cls.plugins = []
+        else:
+            # This must be a plugin implementation, which should be registered.
+            # Simply appending it to the list is all that's needed to keep
+            # track of it later.
+            cls.plugins.append(cls)
 
-    def actions_for_day(self,date):
+class ReportProvider:
+    __metaclass__ = PluginMount
+
+    def __init__(self, log, config):
+        log.info("Registering %s as a Report Provider" % str(self.__class__.__name__))
+        self.log = log
+        self.config = config
+
+class Trello(ReportProvider):
+    """docstring for Trello"""
+    def __init__(self, log, config):
+        super(Trello, self).__init__(log, config)
+        self.log.info("Initializing Trello client...")
+        self.api = TrelloClient(
+            self.config['trello']['key'],
+            self.config['trello']['secret'],
+            self.config['trello']['oauth_token'],
+            self.config['trello']['oauth_token_secret']
+        )
+        self.log.info("Trello client initialized")
+
+    def run(self,date):
         result = ""
         self.log.debug("Retrieving list of boards...")
-        for board in trello.api.list_boards():
+        for board in self.api.list_boards():
             if board.closed is False:
                 self.log.debug("Found open board %s" % board)
                 self.log.debug("Getting card with actions on %s" % (
@@ -162,21 +185,25 @@ if __name__ == "__main__":
         os.environ["TRELLO_EXPIRATION"] = 'never'
         trello.util.create_oauth_token()
 
-    log.debug("Creating Trello client...")
-    trello = Trello(
-        log=log,
-        api_key=config["trello"]["key"],
-        api_secret=config["trello"]["secret"],
-        token=config["trello"]["oauth_token"],
-        token_secret=config["trello"]["oauth_token_secret"]
-    ) or None
-    if trello:
-        log.debug("Connected to Trello")
+    # log.debug("Creating Trello client...")
+    # trello = Trello(
+    #     log=log,
+    #     api_key=config["trello"]["key"],
+    #     api_secret=config["trello"]["secret"],
+    #     token=config["trello"]["oauth_token"],
+    #     token_secret=config["trello"]["oauth_token_secret"]
+    # ) or None
+    # if trello:
+    #     log.debug("Connected to Trello")
+
+    # Load plugins
+    reports = [p(log, config) for p in ReportProvider.plugins]
 
     log.info("PAT Initialized")
 
     report_date = date.today() - timedelta(days=0)
     log.info("Generating report for %s..." % report_date.isoformat())
-    print trello.actions_for_day(report_date)
+    for report in reports:
+        print report.run(report_date)
 
     log.info("PAT shutting down...")

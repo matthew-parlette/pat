@@ -54,6 +54,17 @@ class Trello(PluginProvider):
     def __init__(self, log, config):
         super(Trello, self).__init__(log, config)
         self.log.info("Initializing Trello client...")
+
+        # Gather the oauth tokens if they weren't provided
+        if config['trello']['oauth_token'] == "":
+            # Need to get the trello oauth_token and oauth_token_secret
+            log.debug("Retrieving Trello oauth token...")
+            os.environ["TRELLO_API_KEY"] = config["trello"]["key"]
+            os.environ["TRELLO_API_SECRET"] = config["trello"]["secret"]
+            os.environ["TRELLO_EXPIRATION"] = 'never'
+            trello.util.create_oauth_token()
+
+        # Establish the Trello client connection
         self.api = TrelloClient(
             self.config['trello']['key'],
             self.config['trello']['secret'],
@@ -195,25 +206,6 @@ if __name__ == "__main__":
             outfile.write( yaml.dump(defaults, default_flow_style=False) )
         config = defaults
     log.debug("Config loaded as:\n%s" % str(config))
-
-    if config['trello']['oauth_token'] == "":
-        # Need to get the trello oauth_token and oauth_token_secret
-        log.debug("Retrieving Trello oauth token...")
-        os.environ["TRELLO_API_KEY"] = config["trello"]["key"]
-        os.environ["TRELLO_API_SECRET"] = config["trello"]["secret"]
-        os.environ["TRELLO_EXPIRATION"] = 'never'
-        trello.util.create_oauth_token()
-
-    # log.debug("Creating Trello client...")
-    # trello = Trello(
-    #     log=log,
-    #     api_key=config["trello"]["key"],
-    #     api_secret=config["trello"]["secret"],
-    #     token=config["trello"]["oauth_token"],
-    #     token_secret=config["trello"]["oauth_token_secret"]
-    # ) or None
-    # if trello:
-    #     log.debug("Connected to Trello")
 
     # Load plugins
     plugins = [p(log, config) for p in PluginProvider.plugins]

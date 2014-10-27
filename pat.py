@@ -22,15 +22,34 @@ class PluginMount(type):
             # track of it later.
             cls.plugins.append(cls)
 
-class ReportProvider:
+class PluginProvider:
+    """
+    To define a plugin for the system, simply subclass this object.
+
+    The __init__ should be called from your __init__ method, defined as:
+
+        class Plugin(PluginProvider):
+            def __init__(self, log, config):
+                super(Trello, self).__init__(log, config)
+                # Your plugin specific init code goes here
+
+    Plugins should define one of the following, with the specified parameters:
+
+        report
+
+    """
     __metaclass__ = PluginMount
 
     def __init__(self, log, config):
-        log.info("Registering %s as a Report Provider" % str(self.__class__.__name__))
+        log.info("Registering %s as a PluginProvider" % str(self.__class__.__name__))
         self.log = log
         self.config = config
 
-class Trello(ReportProvider):
+    def report(self,date):
+        """Return a string for the report with the filters provided."""
+        pass
+
+class Trello(PluginProvider):
     """docstring for Trello"""
     def __init__(self, log, config):
         super(Trello, self).__init__(log, config)
@@ -43,7 +62,7 @@ class Trello(ReportProvider):
         )
         self.log.info("Trello client initialized")
 
-    def run(self,date):
+    def report(self,date):
         result = ""
         self.log.debug("Retrieving list of boards...")
         for board in self.api.list_boards():
@@ -197,13 +216,13 @@ if __name__ == "__main__":
     #     log.debug("Connected to Trello")
 
     # Load plugins
-    reports = [p(log, config) for p in ReportProvider.plugins]
+    plugins = [p(log, config) for p in PluginProvider.plugins]
 
     log.info("PAT Initialized")
 
     report_date = date.today() - timedelta(days=0)
     log.info("Generating report for %s..." % report_date.isoformat())
-    for report in reports:
-        print report.run(report_date)
+    for plugin in plugins:
+        print plugin.report(report_date)
 
     log.info("PAT shutting down...")

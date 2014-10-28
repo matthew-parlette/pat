@@ -1,3 +1,6 @@
+from plugin import PluginProvider
+import trello
+
 class Trello(PluginProvider):
     """docstring for Trello"""
     def __init__(self, log, config):
@@ -14,7 +17,7 @@ class Trello(PluginProvider):
             trello.util.create_oauth_token()
 
         # Establish the Trello client connection
-        self.api = TrelloClient(
+        self.api = trello.TrelloClient(
             self.config['trello']['key'],
             self.config['trello']['secret'],
             self.config['trello']['oauth_token'],

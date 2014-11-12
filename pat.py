@@ -4,8 +4,6 @@ import argparse
 import logging
 import os
 import yaml
-from plugin import PluginMount, PluginProvider
-from datetime import date, timedelta
 
 if __name__ == "__main__":
     # Parse command line arguments
@@ -60,17 +58,14 @@ if __name__ == "__main__":
         config = defaults
     log.debug("Config loaded as:\n%s" % str(config))
 
-    # Load plugins
-    log.info("Importing plugins...")
-    from plugins import trelloplug
-    log.info("Loading plugins...")
-    plugins = [p(log, config) for p in PluginProvider.plugins]
+    # Load menu
+    log.info("Importing menu...")
+    from menu import Menu
+    log.info("Loading menu...")
+    menu = Menu(log = log, config = config)
 
     log.info("PAT Initialized")
 
-    report_date = date.today() - timedelta(days=0)
-    log.info("Generating report for %s..." % report_date.isoformat())
-    for plugin in plugins:
-        print plugin.report(report_date)
+    menu.display()
 
     log.info("PAT shutting down...")

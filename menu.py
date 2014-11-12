@@ -17,19 +17,21 @@ class Menu(object):
         self.plugins = [p(log, config) for p in PluginProvider.plugins]
 
     def display(self):
-        print "Main Menu"
-        print "---------"
-        print "(R)eport"
-        print "(Q)uit"
+        running = True
+        while running:
+            print "Main Menu"
+            print "---------"
+            print "(R)eport"
+            print "(Q)uit"
 
-        print "> ",
-        selection = self.getch().lower()
+            print "> ",
+            selection = self.getch().lower()
 
-        if selection == "r":
-            report_date = date.today() - timedelta(days=0)
-            self.log.info("Generating report for %s..." % report_date.isoformat())
-            for plugin in self.plugins:
-                print plugin.report(report_date)
+            if selection == "r":
+                report_date = date.today() - timedelta(days=0)
+                self.log.info("Generating report for %s..." % report_date.isoformat())
+                for plugin in self.plugins:
+                    print plugin.report(report_date)
 
-        if selection == "q":
-            return
+            if selection == "q":
+                running = False
